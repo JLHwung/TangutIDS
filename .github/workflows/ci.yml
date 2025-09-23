@@ -14,5 +14,7 @@ jobs:
         with:
           # Use lts/* when 24 is no longer supported
           node-version: '24'
+      - name: Run unit tests
+        run: node --test
       - name: Run quality checks
         run: node ./contrib/qa.ts ./TangutIDS.txt

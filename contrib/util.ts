@@ -1,6 +1,8 @@
 import process from "node:process";
 import assert from "node:assert";
 
+export type IDS = string | IDSStruct;
+
 export type IDSStruct =
   | {
       operator:
@@ -16,11 +18,11 @@ export type IDSStruct =
         | "⿹"
         | "⿺"
         | "⿻";
-      operands: [string | IDSStruct, string | IDSStruct];
+      operands: [IDS, IDS];
     }
   | {
       operator: "⿲" | "⿳";
-      operands: [string | IDSStruct, string | IDSStruct, string | IDSStruct];
+      operands: [IDS, IDS, IDS];
     };
 
 export function formatUPlus(char: string): string {
@@ -28,9 +30,9 @@ export function formatUPlus(char: string): string {
   return `U+${codePoint.toString(16).toUpperCase()}`;
 }
 
-export function parseIDS(ids: string): string | IDSStruct {
+export function parseIDS(ids: string): IDS {
   let pos = 0;
-  function parseIDSSegment(ids: string): string | IDSStruct {
+  function parseIDSSegment(ids: string): IDS {
     const currentChar = String.fromCodePoint(ids.codePointAt(pos)!);
     pos += currentChar.length; // Move past the current character
     switch (currentChar) {
@@ -71,7 +73,7 @@ export function parseIDS(ids: string): string | IDSStruct {
   return result;
 }
 
-export type IDSMap = Map<string, string | IDSStruct>;
+export type IDSMap = Map<string, IDS>;
 
 export function parseIDSMap(input: string): IDSMap {
   const idsMap: IDSMap = new Map();
@@ -96,21 +98,67 @@ export function parseIDSMap(input: string): IDSMap {
   return idsMap;
 }
 
-export function serializeIDS(ids: string | IDSStruct): string {
+export function isEqualIDS(a: IDS, b: IDS): boolean {
+  if (typeof a === "string" && typeof b === "string") {
+    return a === b;
+  }
+  if (typeof a === "string" || typeof b === "string") {
+    return false;
+  }
+  if (a.operator !== b.operator) {
+    return false;
+  }
+  if (a.operands.length !== b.operands.length) {
+    return false;
+  }
+  for (let i = 0; i < a.operands.length; i++) {
+    const opA = a.operands[i];
+    const opB = b.operands[i];
+    if (typeof opA === "string" && typeof opB === "string") {
+      if (opA !== opB) {
+        return false;
+      }
+    } else if (typeof opA === "object" && typeof opB === "object") {
+      if (!isEqualIDS(opA, opB)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function manipulateIDS(
+  ids: IDS,
+  map: (operand: IDS) => IDS
+): IDS {
+  if (typeof ids !== "string") {
+    for (let i = 0; i < ids.operands.length; i++) {
+      const operand = ids.operands[i];
+      ids.operands[i] = manipulateIDS(operand, map);
+    }
+  }
+  ids = map(ids);
+  return ids;
+}
+
+export function printIDS(ids: IDS): string {
   if (typeof ids === "string") {
     return ids;
   } else {
-    return ids.operator + ids.operands.map(serializeIDS).join("");
+    return ids.operator + ids.operands.map(printIDS).join("");
   }
 }
 
-export function formatIDSMap(idsMap: Map<string, string | IDSStruct>): string {
-  let output = "";
+export function printIDSMap(idsMap: IDSMap): string {
+    // Add UTF-8 BOM header
+  let output = "\uFEFF";
   for (const [key, value] of idsMap) {
     output += `${key
       .codePointAt(0)!
       .toString(16)
-      .toUpperCase()}\t${key}\t${serializeIDS(value)}\n`;
+      .toUpperCase()}\t${key}\t${printIDS(value)}\n`;
   }
   return output;
 }
