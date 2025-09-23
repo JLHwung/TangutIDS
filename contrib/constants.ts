@@ -7,5 +7,5 @@ export const TangutCharacterRanges: [number, number][] = [
 
 export const TangutComponentRanges: [number, number][] = [
   [0x18800, 0x18AFF], // Tangut Components
-  [0x18D80, 0x18DFF], // Tangut Components Supplement
+  [0x18D80, 0x18DF2], // Tangut Components Supplement
 ];
