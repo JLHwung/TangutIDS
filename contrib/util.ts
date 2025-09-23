@@ -1,4 +1,6 @@
 import process from "node:process";
+import assert from "node:assert";
+
 export type IDSStruct =
   | {
       operator:
@@ -64,7 +66,9 @@ export function parseIDS(ids: string): string | IDSStruct {
         return currentChar;
     }
   }
-  return parseIDSSegment(ids);
+  const result = parseIDSSegment(ids);
+  assert(pos === ids.length, `Did not consume entire IDS string`);
+  return result;
 }
 
 export type IDSMap = Map<string, string | IDSStruct>;
