@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import process from "node:process";
 import { TangutCharacterRanges, TangutComponentRanges } from "./constants.ts";
-import { parseIDSMap, formatIDSMap } from "./util.ts";
+import { parseIDSMap, printIDSMap } from "./util.ts";
 import type { IDSMap } from "./util.ts";
 
 function expandIDS(idsMap: IDSMap, type: "character" | "component"): IDSMap {
@@ -37,7 +37,7 @@ function main() {
   const idsMap = parseIDSMap(idsFile);
 
   expandIDS(idsMap, type);
-  const output = formatIDSMap(idsMap);
+  const output = printIDSMap(idsMap);
 
   fs.writeFileSync(process.argv[2], output, "utf-8");
 }

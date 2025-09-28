@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import process from "node:process";
 import { TangutComponentRanges } from "./constants.ts";
-import { formatUPlus, parseIDSMap, serializeIDS } from "./util.ts";
-import type { IDSStruct } from "./util.ts";
+import { formatUPlus, parseIDSMap, printIDS } from "./util.ts";
+import type { IDSStruct, IDS, IDSMap } from "./util.ts";
 
-function idsOperandMustBeTangutComponents(ids: string | IDSStruct): boolean {
+function idsOperandMustBeTangutComponents(ids: IDS): boolean {
   if (typeof ids === "string") {
     const codePoint = ids.codePointAt(0)!;
     return TangutComponentRanges.some(
@@ -18,14 +18,14 @@ function idsOperandMustBeTangutComponents(ids: string | IDSStruct): boolean {
 }
 
 function operandsAreAllTangutComponents(
-  idsMap: Map<string, string | IDSStruct>
+  idsMap: IDSMap
 ): boolean {
   for (const [key, value] of idsMap) {
     if (!idsOperandMustBeTangutComponents(value)) {
       console.error(
         `Error: The IDS for character ${formatUPlus(
           key
-        )} ${key} contains non-Tangut components: ${serializeIDS(value)}`
+        )} ${key} contains non-Tangut components: ${printIDS(value)}`
       );
       return false;
     }
