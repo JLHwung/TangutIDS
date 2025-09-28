@@ -1,97 +1,8 @@
 import fs from "node:fs";
 import process from "node:process";
 import { TangutComponentRanges } from "./constants.ts";
-
-type IDSStruct =
-  | {
-      operator:
-        | "⿰"
-        | "⿱"
-        | "⿲"
-        | "⿳"
-        | "⿴"
-        | "⿵"
-        | "⿶"
-        | "⿷"
-        | "⿸"
-        | "⿹"
-        | "⿺"
-        | "⿻";
-      operands: [string | IDSStruct, string | IDSStruct];
-    }
-  | {
-      operator: "⿲" | "⿳";
-      operands: [string | IDSStruct, string | IDSStruct, string | IDSStruct];
-    };
-
-function formatUPlus(char: string): string {
-  const codePoint = char.codePointAt(0)!;
-  return `U+${codePoint.toString(16).toUpperCase()}`;
-}
-
-function parseIDS(ids: string): string | IDSStruct {
-  let pos = 0;
-  function parseIDSSegment(ids: string): string | IDSStruct {
-    const currentChar = String.fromCodePoint(ids.codePointAt(pos)!);
-    pos += currentChar.length; // Move past the current character
-    switch (currentChar) {
-      case "⿰":
-      case "⿱":
-      case "⿴":
-      case "⿵":
-      case "⿶":
-      case "⿷":
-      case "⿸":
-      case "⿹":
-      case "⿺":
-      case "⿻": {
-        const operator = currentChar;
-        return {
-          operator,
-          operands: [parseIDSSegment(ids), parseIDSSegment(ids)],
-        };
-      }
-      case "⿲":
-      case "⿳": {
-        const operator = currentChar;
-        return {
-          operator,
-          operands: [
-            parseIDSSegment(ids),
-            parseIDSSegment(ids),
-            parseIDSSegment(ids),
-          ],
-        };
-      }
-      default:
-        return currentChar;
-    }
-  }
-  return parseIDSSegment(ids);
-}
-
-function parseIDSMap(input: string): Map<string, string | IDSStruct> {
-  const idsMap: Map<string, string | IDSStruct> = new Map();
-  const lines = input.split("\n");
-  for (const line of lines) {
-    const parts = line.split("\t");
-    if (parts.length === 3) {
-      const key = parts[1];
-      try {
-        const value = parseIDS(parts[2]);
-        idsMap.set(key, value);
-      } catch (error) {
-        console.error(
-          `Error parsing IDS "${parts[2]}" for character ${formatUPlus(
-            key
-          )} ${key}: ${error}`
-        );
-        process.exitCode = 1;
-      }
-    }
-  }
-  return idsMap;
-}
+import { formatUPlus, parseIDSMap, serializeIDS } from "./util.ts";
+import type { IDSStruct } from "./util.ts";
 
 function idsOperandMustBeTangutComponents(ids: string | IDSStruct): boolean {
   if (typeof ids === "string") {
@@ -103,14 +14,6 @@ function idsOperandMustBeTangutComponents(ids: string | IDSStruct): boolean {
     return ids.operands.every((operand) =>
       idsOperandMustBeTangutComponents(operand)
     );
-  }
-}
-
-function serializeIDS(ids: string | IDSStruct): string {
-  if (typeof ids === "string") {
-    return ids;
-  } else {
-    return ids.operator + ids.operands.map(serializeIDS).join("");
   }
 }
 
